@@ -267,3 +267,4 @@ Output:   No people
 * Home: [SQL Mustache Logicless Template Tutorial](https://microtangents.com/sql-mustache:-how-to-create-a-logicless-template-renderer/)
 * Bugs: <https://github.com/MicroTangents/sql-mustache/issues>
 * Repo: <https://github.com/MicroTangents/sql-mustache>
+* [Documentation](https://htmlpreview.github.io/?https://github.com/MicroTangents/sql-mustache/blob/master/docs/index.html)
