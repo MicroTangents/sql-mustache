@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: SQL Mustache</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">SQL Mustache</h1>
+
+    
+
+
+
+    
+
+
+    <h3> </h3>
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    <section>
+        <article><h1>SQL Mustache</h1>
+<p>This work was inspired by the excellent <a href="https://mustache.github.io/">Mustache</a> templating system by Chris Wanstrath and other contributors which in turn was inspired by <a href="http://goog-ctemplate.sourceforge.net/">ctemplate</a>).</p>
+<p>This particular project is built to work with SQL Server 2016 or higher.</p>
+<p>This is a &quot;logic-less&quot; simple templating system that allows templates to be stored in whatever manner makes sense.</p>
+<p>It can be used for pretty much anything that demands a template.</p>
+<p>This implementation is opinionated about formatting because it is important to maintain strict formatting with templates for message and even dynamic code generation.</p>
+<p>Because of this, the templates produced will need to be sensitive to how the tags are layed out within the template.</p>
+<p>The renderer assumes that if you put whitespace in the template that is was deliberate and every effort is made to respect all formatting.</p>
+<h2>Why You Might Use a Mustache Template</h2>
+<p>Use Mustache when you want to craft a data driven readable string that keeps formatting intact without a complex set of logic.</p>
+<p>In many cases you are limited only by your imagination. Here are some examples.</p>
+<h3>Email Messaging system</h3>
+<p>Perhaps your application needs to produce email messages, you could fairly easily craft a templating system that you could even expose to end user authors.</p>
+<p>Those authors could then use any variables translated to keys (or tags) within an email message template.</p>
+<h3>Machine Messaging system</h3>
+<p>It's often necessary to construct messages for queueing system that take many shapes.</p>
+<p>In SQL this typically takes the shape of queries and string concatenation for XML, JSON, or some other proprietary message structure.</p>
+<p>What looks better? This:</p>
+<pre class="prettyprint source lang-sql"><code>DECLARE @m NVARCHAR(max) = N'&lt;message>
+    &lt;id>' + FORMAT(@id, 'G') + N'&lt;/id>
+    &lt;user>' + COALESCE(NULLIF(@user, ''), N'unknown') + N'&lt;/user>
+    &lt;dto>' + COALESCE(@dto, GETUTCDATE()) + N'&lt;/dto>
+&lt;/message>'
+</code></pre>
+<p>Or this:</p>
+<pre class="prettyprint source lang-sql"><code>DECLARE @m NVARCHAR(max) = N'&lt;message>
+    &lt;id>{{id}}&lt;/id>
+    &lt;user>{{user}}&lt;/user>
+    &lt;dto>{{dto}}&lt;/dto>
+&lt;/message>'
+</code></pre>
+<h3>Even Dynamic Code can be Templated Out</h3>
+<p>Whether you are a proponent of dynamics or not regardless of the technology that is being used, it's often necessary to engage in some kind of evaluated string.</p>
+<p>I don't know about you, but I like to be able to at least read the insanity and that includes the formatting of the text within the template.</p>
+<pre class="prettyprint source lang-sql"><code>DECLARE @sqlText NVARCHAR(max) = N'
+    SELECT s.id {{fieldList}}
+    FROM #_tbl_stuff s
+    {{#where}}{{criteria}}{{/where}}
+';
+</code></pre>
+<p>Maybe you think that's ugly, but it's far prettier than what often ends up as the alternative.</p>
+<h2>Usage - Hello World</h2>
+<pre class="prettyprint source lang-sql"><code>PRINT mustache.s_render(
+        N'Hello {{locale}}'
+        , N'{&quot;locale&quot;:&quot;World&quot;}'
+);
+</code></pre>
+<p>Outputs:</p>
+<pre class="prettyprint source lang-text"><code>Hello World
+</code></pre>
+<p>Here's the <a href="https://mustache.github.io/#demo">Demo</a> example (as formatted):</p>
+<pre class="prettyprint source lang-sql"><code>DECLARE @template NVARCHAR(max) = N'&lt;h1>{{header}}&lt;/h1>
+{{#bug}}
+{{/bug}}
+
+{{#items}}
+  {{#first}}
+    &lt;li>&lt;strong>{{name}}&lt;/strong>&lt;/li>
+  {{/first}}
+  {{#link}}
+    &lt;li>&lt;a href=&quot;{{url}}&quot;>{{name}}&lt;/a>&lt;/li>
+  {{/link}}
+{{/items}}
+
+{{#empty}}
+  &lt;p>The list is empty.&lt;/p>
+{{/empty}}';
+
+DECLARE @json NVARCHAR(max) = N'{
+  &quot;header&quot;: &quot;Colors&quot;,
+  &quot;items&quot;: [
+      {&quot;name&quot;: &quot;red&quot;, &quot;first&quot;: true, &quot;url&quot;: &quot;#Red&quot;},
+      {&quot;name&quot;: &quot;green&quot;, &quot;link&quot;: true, &quot;url&quot;: &quot;#Green&quot;},
+      {&quot;name&quot;: &quot;blue&quot;, &quot;link&quot;: true, &quot;url&quot;: &quot;#Blue&quot;}
+  ],
+  &quot;empty&quot;: false
+}';
+
+PRINT mustache.s_render(@template, @json);
+</code></pre>
+<p>Which will output:</p>
+<pre class="prettyprint source lang-html"><code>&lt;h1>Colors&lt;/h1>
+
+
+
+  
+    &lt;li>&lt;strong>red&lt;/strong>&lt;/li>
+  
+  
+
+  
+  
+    &lt;li>&lt;a href=&quot;#Green&quot;>green&lt;/a>&lt;/li>
+  
+
+  
+  
+    &lt;li>&lt;a href=&quot;#Blue&quot;>blue&lt;/a>&lt;/li>
+  
+
+
+</code></pre>
+<p>Notice the liberal white space.  The demo itself removes all white space and formatting.</p>
+<p>The SQL Mustache implementation will respect all white space and formatting.</p>
+<p>While it is not necessary to worry much about formatting when dealing with HTML, it is very necessary when dealing with other use cases such as a plain text email template, or a code template.</p>
+<p>To get the appropriately formatted text (with a comment and unset variable added in), try this example:</p>
+<pre class="prettyprint source lang-sql"><code>DECLARE @template NVARCHAR(max) = N'&lt;h1>{{header}}&lt;/h1>
+{{#bug}}
+{{/bug}}
+
+&lt;ul>
+{{#items}}  {{#first}}&lt;li>&lt;strong>{{name}}&lt;/strong>&lt;/li>{{/first}}{{#link}}&lt;li>&lt;a href=&quot;{{url}}&quot;>{{name}}&lt;/a>&lt;/li>{{/link}}
+{{/items}}&lt;/ul>
+
+{{#empty}}  &lt;p>The list is empty.&lt;/p>{{/empty}}
+
+&lt;p>{{notset}}{{! comment}}&lt;/p>
+';
+
+DECLARE @json NVARCHAR(max) = N'{
+  &quot;header&quot;: &quot;Colors&quot;,
+  &quot;items&quot;: [
+      {&quot;name&quot;: &quot;red&quot;, &quot;first&quot;: true, &quot;url&quot;: &quot;#Red&quot;},
+      {&quot;name&quot;: &quot;green&quot;, &quot;link&quot;: true, &quot;url&quot;: &quot;#Green&quot;},
+      {&quot;name&quot;: &quot;blue&quot;, &quot;link&quot;: true, &quot;url&quot;: &quot;#Blue&quot;}
+  ],
+  &quot;empty&quot;: false
+}';
+
+PRINT mustache.s_render(@template, @json);
+</code></pre>
+<p>Compare this output with that above:</p>
+<pre class="prettyprint source lang-html"><code>&lt;h1>Colors&lt;/h1>
+
+
+&lt;ul>
+    &lt;li>&lt;strong>red&lt;/strong>&lt;/li>
+    &lt;li>&lt;a href=&quot;#Green&quot;>green&lt;/a>&lt;/li>
+    &lt;li>&lt;a href=&quot;#Blue&quot;>blue&lt;/a>&lt;/li>
+&lt;/ul>
+
+  &lt;p>The list is empty.&lt;/p>
+
+&lt;p>&lt;/p>
+</code></pre>
+<h2>Supported Functionality</h2>
+<p><strong>Remember:</strong> this implementation does NOT assume you are working with HTML and formatting for your template is <strong>strictly respected</strong>!</p>
+<p>[✔] Variables (Tags)</p>
+<pre class="prettyprint source lang-text"><code>Template: A big animal = {{animal}}
+Hash: { &quot;animal&quot; : &quot;Elephant&quot; }
+Output: A big Animal = Elephant
+</code></pre>
+<p>[✔] Unescaped Variables (Tags)</p>
+<pre class="prettyprint source lang-text"><code>Template: &lt;p>this is {{{html}}} this is encoded {{html}}&lt;p>
+Hash: {&quot;html&quot;:&quot;&lt;b>bold&lt;/b>&quot;}
+Output: &lt;p>this is &lt;b>bold&lt;/b> this is encoded &lt;b&gt;bold&lt;/b&gt;&lt;p>
+</code></pre>
+<p>[✔] Comments</p>
+<pre class="prettyprint source lang-text"><code>Template: |{{! this is a comment }}|
+Hash: {}
+Output: ||
+</code></pre>
+<p>[✔] Sections</p>
+<pre class="prettyprint source lang-text"><code>Template: {{#showMe}}Shown{{/showMe}}{{#hideMe}}Hidden{{/hideMe}}
+Hash: { &quot;showme&quot; : true, &quot;hideMe&quot; : false }
+Output: Shown
+</code></pre>
+<p>[✔] Nested Sections</p>
+<pre class="prettyprint source lang-text"><code>Template: {{#outer}}{{#inner}}{{tag}}{{/inner}}{{/outer}}
+Hash: { &quot;outer&quot;: [{&quot;inner&quot;: {&quot;tag&quot;: 1}}, {&quot;inner&quot;: {&quot;tag&quot;: 2}}, {&quot;inner&quot;: {&quot;tag&quot;: 3}} ]}
+Output: 123
+</code></pre>
+<p>[✔] Conditional Sections</p>
+<pre class="prettyprint source lang-text"><code>Template: {{#people}} &lt;b>{{person}}&lt;/b> {{/people}} {{^people}} No people {{/people}}
+Hash: { &quot;people&quot;: [] }
+Output:   No people
+</code></pre>
+<p>[✔] Conditional Sections - false</p>
+<pre class="prettyprint source lang-text"><code>Template: {{#people}} &lt;b>{{person}}&lt;/b> {{/people}} {{^people}} No people {{/people}}
+Hash: { &quot;people&quot;: false }
+Output:   No people
+</code></pre>
+<p>[❌] Partials</p>
+<p>[❌] Lambdas</p>
+<p>[❌] Set Delimiter</p>
+<p>[❌] Error on Missing Tag in Object</p>
+<h2>Meta</h2>
+<ul>
+<li>Code: git clone <a href="https:%5C/%5C/github.com/MicroTangents/sql-mustache">https://github.com/MicroTangents/sql-mustache</a></li>
+<li>Home: <a href="https://microtangents.com/sql-mustache:-how-to-create-a-logicless-template-renderer/">SQL Mustache Logicless Template Tutorial</a></li>
+<li>Bugs: <a href="https:%5C/%5C/github.com/MicroTangents/sql-mustache/issues">https://github.com/MicroTangents/sql-mustache/issues</a></li>
+<li>Repo: <a href="https:%5C/%5C/github.com/MicroTangents/sql-mustache">https://github.com/MicroTangents/sql-mustache</a></li>
+</ul></article>
+    </section>
+
+
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">SQL Mustache</a></h2><h3>Modules</h3><ul><li><a href="module-mustache_s_render.html">mustache/s_render</a></li><li><a href="module-mustache_s_render_clean.html">mustache/s_render_clean</a></li><li><a href="module-mustache_s_render_section_array.html">mustache/s_render_section_array</a></li><li><a href="module-mustache_s_render_section_bool.html">mustache/s_render_section_bool</a></li><li><a href="module-mustache_s_render_section_object.html">mustache/s_render_section_object</a></li><li><a href="module-mustache_s_render_tag.html">mustache/s_render_tag</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.4</a> on Sun Jul 12 2020 17:06:06 GMT-0700 (Pacific Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
