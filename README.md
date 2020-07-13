@@ -1,10 +1,10 @@
 # SQL Mustache
 
-This work was inspired by the excellent [Mustache](https://mustache.github.io/) templating system by Chris Wanstrath and other contributors which in turn was inspired by [ctemplate](http://goog-ctemplate.sourceforge.net/)).
+This work was inspired by the [Mustache](https://mustache.github.io/) templating system by Chris Wanstrath and other contributors which in turn was inspired by [ctemplate](http://goog-ctemplate.sourceforge.net/)).
 
 This particular project is built to work with SQL Server 2016 or higher.
 
-This is a "logic-less" simple templating system that allows templates to be stored in whatever manner makes sense.
+This is a "logic-less" simple templating system that allows templates to be stored in whatever manner makes sense (tables, in code, config files, or whatever).
 
 It can be used for pretty much anything that demands a template.
 
@@ -12,7 +12,19 @@ This implementation is opinionated about formatting because it is important to m
 
 Because of this, the templates produced will need to be sensitive to how the tags are layed out within the template.
 
-The renderer assumes that if you put whitespace in the template that is was deliberate and every effort is made to respect all formatting.
+The renderer assumes that if you put whitespace in the template that it was deliberate and every effort is made to respect all formatting.
+
+## Detailed Discussion
+
+For a detailed exploration around the construction of this system see the article: [SQL Mustache: How to Create a Logicless Template Renderer](https://microtangents.com/sql-mustache:-how-to-create-a-logicless-template-renderer/).
+
+## To Install
+
+``` text
+1. Clone the repo
+2. Edit install.ini adding your ServerName and DatabaseName
+3. Run install.cmd from the project folder
+```
 
 ## Why You Might Use a Mustache Template
 
@@ -22,17 +34,43 @@ In many cases you are limited only by your imagination. Here are some examples.
 
 ### Email Messaging system
 
-Perhaps your application needs to produce email messages, you could fairly easily craft a templating system that you could even expose to end user authors.
+Perhaps your application needs to produce email messages, you could fairly easily craft a templating system that you could then expose to end user authors.
 
 Those authors could then use any variables translated to keys (or tags) within an email message template.
 
+Example:
+
+``` sql
+DECLARE @msgTpl NVARCHAR(max) = N'Dear {{name}},
+
+Thank you for being such a loyal customer, in {{year}} to date the products you''ve purchased are:
+{{#products}} * {{product}}
+{{/products}}
+Thank you for your support!
+
+The Management';
+
+DECLARE @json NVARCHAR(max) = N'{
+  "name":"Jack",
+  "products":[
+    {"product":"Widget Burner Premium"},
+    {"product":"Book Builder Deluxe"},
+    {"product":"Magic AI 99.97.765"}
+  ]
+}';
+
+PRINT mustache.s_render(@msgTpl, @json);
+```
+
 ### Machine Messaging system
 
-It's often necessary to construct messages for queueing system that take many shapes.
+It's often necessary to construct messages for queueing systems that take many shapes.
 
 In SQL this typically takes the shape of queries and string concatenation for XML, JSON, or some other proprietary message structure.
 
-What looks better? This:
+Which is more readable?
+
+This:
 
 ``` sql
 DECLARE @m NVARCHAR(max) = N'<message>
@@ -56,7 +94,7 @@ DECLARE @m NVARCHAR(max) = N'<message>
 
 Whether you are a proponent of dynamics or not regardless of the technology that is being used, it's often necessary to engage in some kind of evaluated string.
 
-I don't know about you, but I like to be able to at least read the insanity and that includes the formatting of the text within the template.
+I don't know about you, but I like to at least be able to read the code and that includes the formatting of the text within the template.
 
 ``` sql
 DECLARE @sqlText NVARCHAR(max) = N'
@@ -68,7 +106,7 @@ DECLARE @sqlText NVARCHAR(max) = N'
 
 Maybe you think that's ugly, but it's far prettier than what often ends up as the alternative.
 
-## Usage - Hello World
+## Simple Usage - Hello World
 
 ``` sql
 PRINT mustache.s_render(
@@ -195,7 +233,7 @@ Compare this output with that above:
 
 ## Supported Functionality
 
-**Remember:** this implementation does NOT assume you are working with HTML and formatting for your template is **strictly respected**!
+**Remember:** this implementation does NOT assume you are working with HTML and formatting for your template is **strictly respected**! Format your templates accordingly.
 
 [&#10004;] Variables (Tags)
 
@@ -253,17 +291,20 @@ Hash: { "people": false }
 Output:   No people
 ```
 
-[❌] Partials
+## Un-Supported Functionality
 
-[❌] Lambdas
+[❌] Partials - essentially the ability to include templates
 
-[❌] Set Delimiter
+[❌] Lambdas - temporary functions compiled and executed at run time
 
-[❌] Error on Missing Tag in Object
+[❌] Set Delimiter - the ability to set something other than curly's as the tag notation delimiters
+
+[❌] Error on Missing Tag in Object - missing tags are simply discarded and replaced with an empty string
 
 ## Meta
 
-* Code: git clone <https://github.com/MicroTangents/sql-mustache>
-* Home: [SQL Mustache Logicless Template Tutorial](https://microtangents.com/sql-mustache:-how-to-create-a-logicless-template-renderer/)
-* Bugs: <https://github.com/MicroTangents/sql-mustache/issues>
-* Repo: <https://github.com/MicroTangents/sql-mustache>
+* Code: git clone <https://github.com/microtangents/sql-mustache>
+* Home: <https://microtangents.com>
+* Bugs: <https://github.com/microtangents/sql-mustache/issues>
+* Repo: <https://github.com/microtangents/sql-mustache>
+* JSDocs: [Source Documentation](https://htmlpreview.github.io/?https://github.com/MicroTangents/sql-mustache/blob/master/docs/index.html)
