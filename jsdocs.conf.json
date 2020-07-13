@@ -1,0 +1,28 @@
+{
+    "plugins": ["plugins/markdown","plugins/commentsOnly"],
+    "recurseDepth": 10,
+    "source": {
+        "includePattern": "mustache.+\\.sql?$",
+        "excludePattern": "(^|\\/|\\\\)_"
+    },
+    "sourceType": "module",
+    "tags": {
+        "allowUnknownTags": true,
+        "dictionaries": ["jsdoc","closure"]
+    },
+    "templates": {
+        "referenceTitle":"SQL Mustache",
+        "collapse":true,
+        "cleverLinks": false,
+        "monospaceLinks": false,
+        "default": {
+            "outputSourceFiles": false
+        }
+    },
+    "opts":{
+        "template":"jsdocTemplates/dyntitle",
+        "destination":"docs",
+        "readme":"./README.md",
+        "recurse":true
+    }
+}
